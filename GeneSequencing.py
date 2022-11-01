@@ -97,7 +97,7 @@ class GeneSequencing:
 
 
 	def findBestCost(self, costs):
-		bestCost = Cost(None, None)
+		bestCost = Cost(None, None, None)
 		for cost in costs:
 			if bestCost.costVal is None:
 				bestCost = cost
@@ -112,22 +112,43 @@ class GeneSequencing:
 		self.numRows = len(seq2)+1
 		#matrix = seq1 * seq2
 		#0 row and 0 column == _
-		costDict = dict() # Key-Coordinate[row, column] : Value-[Cost, PrevCoordinate]
+		self.costDict = dict() # Key-Coordinate[row, column] : Value-[Cost, PrevCoordinate]
 		
-		costDict[tuple((0,0))] = Cost(0, None)
+		self.costDict[tuple((0,0))] = Cost(0, None, None)
 		# Fill first row
 		for i in range(1, self.numColumns):
 			prevCell = tuple((0, i-1))
-			prevCost = costDict.get(prevCell)
-			costDict[tuple((0,i))] = Cost(prevCost.costVal+INDEL, prevCell, Direction.RIGHT)
+			prevCost = self.costDict.get(prevCell)
+			self.costDict[tuple((0,i))] = Cost(prevCost.costVal+INDEL, prevCell, Direction.RIGHT)
 
 		#Fill first col
 		for i in range(1, self.numRows):
 			prevCell = tuple((i-1, 0))
-			prevCost = costDict.get(prevCell)
-			costDict[tuple((i,0))] = Cost(prevCost.costVal+INDEL, prevCell, Direction.DOWN)
+			prevCost = self.costDict.get(prevCell)
+			self.costDict[tuple((i,0))] = Cost(prevCost.costVal+INDEL, prevCell, Direction.DOWN)
 
-		self.printDict(costDict, seq1, seq2)
+		self.printDict(self.costDict, seq1, seq2)
+
+		#Run algorithm for all cells
+		for rowIndex in range(1, self.numRows):
+			for colIndex in range(1, self.numColumns):
+				rightPrevCell = tuple((rowIndex, colIndex-1))
+				rightCost = Cost(self.costDict.get(rightPrevCell).costVal+INDEL, rightPrevCell, Direction.RIGHT)
+				
+				downPrevCell = tuple((rowIndex-1, colIndex))
+				downCost = Cost(self.costDict.get(downPrevCell).costVal+INDEL, downPrevCell, Direction.DOWN)
+				
+				# Calculate diagonal cost if match/sub
+				diagonalPrevCell = tuple((rowIndex-1, colIndex-1))
+				diagonalCost = Cost(self.costDict.get(diagonalPrevCell).costVal, diagonalPrevCell, Direction.DIAGONAL)
+				if (seq1[colIndex-1] == seq2[rowIndex-1]):
+					diagonalCost.costVal += MATCH
+				else:
+					diagonalCost.costVal += SUB
+				
+				self.costDict[tuple((rowIndex,colIndex))] = self.findBestCost([diagonalCost, rightCost, downCost])
+				self.printDict(self.costDict, seq1, seq2)
+		
 		# cell = tuple((seq1, seq2))
 		# finalCost = costDict.get(cell)
 		# score = finalCost.costVal
