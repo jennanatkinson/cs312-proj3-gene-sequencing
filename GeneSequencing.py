@@ -1,5 +1,8 @@
 #!/usr/bin/python3
 
+# from os import SCHED_OTHER
+from enum import Enum, auto
+from re import X
 from which_pyqt import PYQT_VER
 if PYQT_VER == 'PYQT5':
 	from PyQt5.QtCore import QLineF, QPointF
@@ -20,6 +23,35 @@ MATCH = -3
 INDEL = 5
 SUB = 1
 
+# minVal = 0
+# maxVal = 1
+
+# class Cell:
+# 	def __init__(self, x:int, y:int):
+# 		self.x = x
+# 		self.y = y
+
+# 	def __hash__(self):
+# 		return (self.y * (maxVal - minVal)) + self.x
+
+	# def __eq__(self, other):
+	# 	return (self.x, self.y) == (other.x, other.y)
+
+class Direction(Enum):
+	RIGHT = auto()
+	DOWN = auto()
+	DIAGONAL = auto()
+	
+class Cost:
+	def __init__(self, cost:int, prev:tuple, dir:Direction):
+		self.costVal = cost
+		self.prev = prev
+		self.direction = dir
+
+	def __eq__(self, other):
+		return (self.costVal, self.prev, self.direction) == (other.costVal, other.prev, self.direction)
+
+
 class GeneSequencing:
 
 	def __init__( self ):
@@ -29,13 +61,83 @@ class GeneSequencing:
 # you whether you should compute a banded alignment or full alignment, and _align_length_ tells you 
 # how many base pairs to use in computing the alignment
 
-	def align( self, seq1, seq2, banded, align_length):
+	def printDict(self, dict, seq1, seq2):
+		table_data = [[]]
+		# Put the first row aka listing the seq1
+		for i in range(-1, self.numColumns):
+			if i == -1:
+				table_data[0].append(" ")
+			elif i == 0:
+				table_data[0].append("_")
+			else:
+				table_data[0].append(seq1[i-1])
+		
+		for i in range(0, self.numRows):
+			table_data.append([])
+			last = len(table_data)-1
+			for j in range(-1, self.numColumns):
+				if j == -1 and i == 0:
+					table_data[last].append("_")
+				elif j == -1:
+					table_data[last].append(seq2[i-1])
+				else:
+					string = "" #f"({i},{j}):"
+					item = dict.get(tuple((i, j)))
+					if type(item) == Cost:
+						string += f"{item.costVal}"
+					else:
+						string += " "
+					table_data[last].append(string)
+
+		formatString = "{: >5} "
+		for row in table_data:
+			for item in row:
+				print(formatString.format(item), end="")
+			print()
+
+
+	def findBestCost(self, costs):
+		bestCost = Cost(None, None)
+		for cost in costs:
+			if bestCost.costVal is None:
+				bestCost = cost
+			elif cost.costVal < bestCost.costVal:
+				bestCost = cost
+		return bestCost
+
+	def align(self, seq1, seq2, banded, align_length):
 		self.banded = banded
 		self.MaxCharactersToAlign = align_length
+		self.numColumns = len(seq1)+1
+		self.numRows = len(seq2)+1
+		#matrix = seq1 * seq2
+		#0 row and 0 column == _
+		costDict = dict() # Key-Coordinate[row, column] : Value-[Cost, PrevCoordinate]
+		
+		costDict[tuple((0,0))] = Cost(0, None)
+		# Fill first row
+		for i in range(1, self.numColumns):
+			prevCell = tuple((0, i-1))
+			prevCost = costDict.get(prevCell)
+			costDict[tuple((0,i))] = Cost(prevCost.costVal+INDEL, prevCell, Direction.RIGHT)
+
+		#Fill first col
+		for i in range(1, self.numRows):
+			prevCell = tuple((i-1, 0))
+			prevCost = costDict.get(prevCell)
+			costDict[tuple((i,0))] = Cost(prevCost.costVal+INDEL, prevCell, Direction.DOWN)
+
+		self.printDict(costDict, seq1, seq2)
+		# cell = tuple((seq1, seq2))
+		# finalCost = costDict.get(cell)
+		# score = finalCost.costVal
+
+		# while not (cell[0] == 0 and cell[1] == 0):
+		
 
 ###################################################################################################
 # your code should replace these three statements and populate the three variables: score, alignment1 and alignment2
-		score = random.random()*100;
+		score = random.random()*100
 		alignment1 = 'abc-easy  DEBUG:({} chars,align_len={}{})'.format(
 			len(seq1), align_length, ',BANDED' if banded else '')
 		alignment2 = 'as-123--  DEBUG:({} chars,align_len={}{})'.format(
