@@ -132,6 +132,10 @@ class GeneSequencing:
 			return falseVal
 		
 	def align(self, seq1, seq2, banded, align_length):
+		if len(seq1) > align_length:
+			seq1 = seq1[:align_length]
+		if len(seq2) > align_length:
+			seq2 = seq2[:align_length]
 		self.banded = banded
 		self.MaxCharactersToAlign = align_length
 		self.numColumns = len(seq1)+1
