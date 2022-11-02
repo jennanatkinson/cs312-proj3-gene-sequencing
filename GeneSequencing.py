@@ -159,38 +159,47 @@ class GeneSequencing:
 		self.printDict(seq1, seq2)
 
 		#Run algorithm for all cells
-		# for rowIndex in range(1, self.numRows):
-		# 	for colIndex in range(1, self.numColumns):
-		# 		leftPrevCell = tuple((rowIndex, colIndex-1))
-		# 		leftCost = Cost(self.costDict.get(leftPrevCell).costVal+INDEL, leftPrevCell, Direction.LEFT)
+		for rowIndex in range(1, self.numRows):
+			for colIndex in range(max(rowIndex-MAXINDELS,1), min(rowIndex+MAXINDELS+1,self.numColumns)):
+				costList = []
+
+				leftPrevCell = tuple((rowIndex, colIndex-1))
+				leftPrevCost = self.costDict.get(leftPrevCell)
+				if leftPrevCost is not None:
+					costList.append(Cost(leftPrevCost.costVal+INDEL, leftPrevCell, Direction.LEFT))
 				
-		# 		topPrevCell = tuple((rowIndex-1, colIndex))
-		# 		topCost = Cost(self.costDict.get(topPrevCell).costVal+INDEL, topPrevCell, Direction.TOP)
+				topPrevCell = tuple((rowIndex-1, colIndex))
+				topPrevCost = self.costDict.get(topPrevCell)
+				if topPrevCost is not None:
+					costList.append(Cost(topPrevCost.costVal+INDEL, topPrevCell, Direction.TOP))
 				
-		# 		# Calculate diagonal cost if match/sub
-		# 		diagonalPrevCell = tuple((rowIndex-1, colIndex-1))
-		# 		diagonalCost = Cost(self.costDict.get(diagonalPrevCell).costVal, diagonalPrevCell, Direction.DIAGONAL)
-		# 		if (seq1[colIndex-1] == seq2[rowIndex-1]):
-		# 			diagonalCost.costVal += MATCH
-		# 		else:
-		# 			diagonalCost.costVal += SUB
+				# Calculate diagonal cost if match/sub
+				diagonalPrevCell = tuple((rowIndex-1, colIndex-1))
+				diagonalPrevCost = self.costDict.get(diagonalPrevCell)
+				if diagonalPrevCost is not None:
+					diagonalCost = Cost(diagonalPrevCost.costVal, diagonalPrevCell, Direction.DIAGONAL)
+					if (seq1[colIndex-1] == seq2[rowIndex-1]):
+						diagonalCost.costVal += MATCH
+					else:
+						diagonalCost.costVal += SUB
+					costList.append(diagonalCost)
 				
-		# 		self.costDict[tuple((rowIndex,colIndex))] = self.findMinCost([leftCost, topCost, diagonalCost])
-		# 		self.printDict(seq1, seq2)
+				self.costDict[tuple((rowIndex,colIndex))] = self.findMinCost(costList)
+				self.printDict(seq1, seq2)
 		
-		# cell = tuple((len(seq2), len(seq1)))
-		# score = self.costDict.get(cell).costVal
-		# alignment1, alignment2 = self.getAlignmentStrings(seq1, seq2, cell)
-		# print(alignment1)
-		# print(alignment2)
+		cell = tuple((len(seq2), len(seq1)))
+		score = self.costDict.get(cell).costVal
+		alignment1, alignment2 = self.getAlignmentStrings(seq1, seq2, cell)
+		print(alignment1)
+		print(alignment2)
 
 ###################################################################################################
 # your code should replace these three statements and populate the three variables: score, alignment1 and alignment2
-		score = random.random()*100
-		alignment1 = 'abc-easy  DEBUG:({} chars,align_len={}{})'.format(
-			len(seq1), align_length, ',BANDED' if banded else '')
-		alignment2 = 'as-123--  DEBUG:({} chars,align_len={}{})'.format(
-			len(seq2), align_length, ',BANDED' if banded else '')
+		# score = random.random()*100
+		# alignment1 = 'abc-easy  DEBUG:({} chars,align_len={}{})'.format(
+		# 	len(seq1), align_length, ',BANDED' if banded else '')
+		# alignment2 = 'as-123--  DEBUG:({} chars,align_len={}{})'.format(
+		# 	len(seq2), align_length, ',BANDED' if banded else '')
 ###################################################################################################					
 		
 		return {'align_cost':score, 'seqi_first100':alignment1, 'seqj_first100':alignment2}
