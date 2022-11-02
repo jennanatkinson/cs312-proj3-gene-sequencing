@@ -173,11 +173,15 @@ class GeneSequencing:
 				leftPrevCost = self.costDict.get(leftPrevCell)
 				if leftPrevCost is not None:
 					costList.append(Cost(leftPrevCost.costVal+INDEL, leftPrevCell, Direction.LEFT))
+				else:
+					costList.append(Cost(math.inf, None, None))
 				
 				topPrevCell = tuple((rowIndex-1, colIndex))
 				topPrevCost = self.costDict.get(topPrevCell)
 				if topPrevCost is not None:
 					costList.append(Cost(topPrevCost.costVal+INDEL, topPrevCell, Direction.TOP))
+				else:
+					costList.append(Cost(math.inf, None, None))
 				
 				# Calculate diagonal cost if match/sub
 				diagonalPrevCell = tuple((rowIndex-1, colIndex-1))
@@ -189,13 +193,18 @@ class GeneSequencing:
 					else:
 						diagonalCost.costVal += SUB
 					costList.append(diagonalCost)
+				else:
+					costList.append(Cost(math.inf, None, None))
 				
 				self.costDict[tuple((rowIndex,colIndex))] = self.findMinCost(costList)
 				self.printDict(seq1, seq2)
 		
 		cell = tuple((len(seq2), len(seq1)))
 		score = self.costDict.get(cell).costVal
-		alignment1, alignment2 = self.getAlignmentStrings(seq1, seq2, cell)
+		if score != math.inf:
+			alignment1, alignment2 = self.getAlignmentStrings(seq1, seq2, cell)
+		else:
+			alignment1 = alignment2 = "No Alignment Possible"
 		print(alignment1)
 		print(alignment2)
 
