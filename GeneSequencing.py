@@ -102,7 +102,7 @@ class GeneSequencing:
 		for cost in costs:
 			if bestCost.costVal is None:
 				bestCost = cost
-			elif cost.costVal < bestCost.costVal:
+			elif cost.costVal is not None and cost.costVal < bestCost.costVal:
 				bestCost = cost
 		return bestCost
 
@@ -125,6 +125,12 @@ class GeneSequencing:
 		#Reverse strings
 		return alignment1[::-1], alignment2[::-1]
 
+	def checkBanded(self, banded, trueVal, falseVal):
+		if banded:
+			return trueVal
+		else:
+			return falseVal
+		
 	def align(self, seq1, seq2, banded, align_length):
 		self.banded = banded
 		self.MaxCharactersToAlign = align_length
@@ -135,14 +141,17 @@ class GeneSequencing:
 		self.costDict = dict() # Key-Coordinate[row, column] : Value-[Cost, PrevCoordinate]
 		
 		self.costDict[tuple((0,0))] = Cost(0, None, None)
+	
 		# Fill first row
-		for i in range(1, self.numColumns):
+		numFirstRow = self.checkBanded(banded, min(1+MAXINDELS,self.numColumns), self.numColumns)
+		for i in range(1, numFirstRow):
 			prevCell = tuple((0, i-1))
 			prevCost = self.costDict.get(prevCell)
 			self.costDict[tuple((0,i))] = Cost(prevCost.costVal+INDEL, prevCell, Direction.LEFT)
 
 		#Fill first col
-		for i in range(1, self.numRows):
+		numFirstCol = self.checkBanded(banded, min(1+MAXINDELS,self.numRows), self.numRows)
+		for i in range(1, numFirstCol):
 			prevCell = tuple((i-1, 0))
 			prevCost = self.costDict.get(prevCell)
 			self.costDict[tuple((i,0))] = Cost(prevCost.costVal+INDEL, prevCell, Direction.TOP)
@@ -150,38 +159,38 @@ class GeneSequencing:
 		self.printDict(seq1, seq2)
 
 		#Run algorithm for all cells
-		for rowIndex in range(1, self.numRows):
-			for colIndex in range(1, self.numColumns):
-				leftPrevCell = tuple((rowIndex, colIndex-1))
-				leftCost = Cost(self.costDict.get(leftPrevCell).costVal+INDEL, leftPrevCell, Direction.LEFT)
+		# for rowIndex in range(1, self.numRows):
+		# 	for colIndex in range(1, self.numColumns):
+		# 		leftPrevCell = tuple((rowIndex, colIndex-1))
+		# 		leftCost = Cost(self.costDict.get(leftPrevCell).costVal+INDEL, leftPrevCell, Direction.LEFT)
 				
-				topPrevCell = tuple((rowIndex-1, colIndex))
-				topCost = Cost(self.costDict.get(topPrevCell).costVal+INDEL, topPrevCell, Direction.TOP)
+		# 		topPrevCell = tuple((rowIndex-1, colIndex))
+		# 		topCost = Cost(self.costDict.get(topPrevCell).costVal+INDEL, topPrevCell, Direction.TOP)
 				
-				# Calculate diagonal cost if match/sub
-				diagonalPrevCell = tuple((rowIndex-1, colIndex-1))
-				diagonalCost = Cost(self.costDict.get(diagonalPrevCell).costVal, diagonalPrevCell, Direction.DIAGONAL)
-				if (seq1[colIndex-1] == seq2[rowIndex-1]):
-					diagonalCost.costVal += MATCH
-				else:
-					diagonalCost.costVal += SUB
+		# 		# Calculate diagonal cost if match/sub
+		# 		diagonalPrevCell = tuple((rowIndex-1, colIndex-1))
+		# 		diagonalCost = Cost(self.costDict.get(diagonalPrevCell).costVal, diagonalPrevCell, Direction.DIAGONAL)
+		# 		if (seq1[colIndex-1] == seq2[rowIndex-1]):
+		# 			diagonalCost.costVal += MATCH
+		# 		else:
+		# 			diagonalCost.costVal += SUB
 				
-				self.costDict[tuple((rowIndex,colIndex))] = self.findMinCost([leftCost, topCost, diagonalCost])
-				self.printDict(seq1, seq2)
+		# 		self.costDict[tuple((rowIndex,colIndex))] = self.findMinCost([leftCost, topCost, diagonalCost])
+		# 		self.printDict(seq1, seq2)
 		
-		cell = tuple((len(seq2), len(seq1)))
-		score = self.costDict.get(cell).costVal
-		alignment1, alignment2 = self.getAlignmentStrings(seq1, seq2, cell)
-		print(alignment1)
-		print(alignment2)
+		# cell = tuple((len(seq2), len(seq1)))
+		# score = self.costDict.get(cell).costVal
+		# alignment1, alignment2 = self.getAlignmentStrings(seq1, seq2, cell)
+		# print(alignment1)
+		# print(alignment2)
 
 ###################################################################################################
 # your code should replace these three statements and populate the three variables: score, alignment1 and alignment2
-		# score = random.random()*100
-		# alignment1 = 'abc-easy  DEBUG:({} chars,align_len={}{})'.format(
-		# 	len(seq1), align_length, ',BANDED' if banded else '')
-		# alignment2 = 'as-123--  DEBUG:({} chars,align_len={}{})'.format(
-		# 	len(seq2), align_length, ',BANDED' if banded else '')
+		score = random.random()*100
+		alignment1 = 'abc-easy  DEBUG:({} chars,align_len={}{})'.format(
+			len(seq1), align_length, ',BANDED' if banded else '')
+		alignment2 = 'as-123--  DEBUG:({} chars,align_len={}{})'.format(
+			len(seq2), align_length, ',BANDED' if banded else '')
 ###################################################################################################					
 		
 		return {'align_cost':score, 'seqi_first100':alignment1, 'seqj_first100':alignment2}
