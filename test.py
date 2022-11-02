@@ -1,5 +1,39 @@
 from GeneSequencing import *
 
+def test_should_solve_simpleMatch():
+  solver = GeneSequencing()
+  answer = solver.align("h", "h", False, 100)
+  assert(answer['align_cost'] == MATCH)
+  assert(answer['seqi_first100'] == 'h')
+  assert(answer['seqj_first100'] == 'h')
+
+def test_should_solve_simpleSub():
+  solver = GeneSequencing()
+  answer = solver.align("h", "a", False, 100)
+  assert(answer['align_cost'] == SUB)
+  assert(answer['seqi_first100'] == 'h')
+  assert(answer['seqj_first100'] == 'a')
+
+def test_should_solve_simpleIndel():
+  solver = GeneSequencing()
+  answer = solver.align("h", "", False, 100)
+  assert(answer['align_cost'] == INDEL)
+  assert(answer['seqi_first100'] == 'h')
+  assert(answer['seqj_first100'] == '-')
+
+def test_should_solve_sameSeq():
+  solver = GeneSequencing()
+  seq = "match"
+  answer = solver.align(seq, seq, False, 100)
+  assert(answer['align_cost'] == MATCH*len(seq))
+  assert(answer['seqi_first100'] == seq)
+  assert(answer['seqj_first100'] == seq)
+
+def test_should_solve_closeAlignedSeq():
+  solver = GeneSequencing()
+  answer = solver.align("polynomial", "exponential", False, 100)
+  assert(answer['align_cost'] == -1)
+
 def test_should_solve_mismatchedLen():
   solver = GeneSequencing()
   answer = solver.align("hi", "hello", False, 100)
