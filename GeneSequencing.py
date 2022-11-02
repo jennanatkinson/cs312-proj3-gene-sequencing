@@ -160,7 +160,9 @@ class GeneSequencing:
 
 		#Run algorithm for all cells
 		for rowIndex in range(1, self.numRows):
-			for colIndex in range(max(rowIndex-MAXINDELS,1), min(rowIndex+MAXINDELS+1,self.numColumns)):
+			colStart = self.checkBanded(banded, max(rowIndex-MAXINDELS,1), 1)
+			colEnd = self.checkBanded(banded, min(rowIndex+MAXINDELS+1,self.numColumns), self.numColumns)
+			for colIndex in range(colStart, colEnd):
 				costList = []
 
 				leftPrevCell = tuple((rowIndex, colIndex-1))
