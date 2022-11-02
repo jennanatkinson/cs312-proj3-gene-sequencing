@@ -34,7 +34,14 @@ def test_should_solve_closeAlignedSeq():
   answer = solver.align("polynomial", "exponential", False, 100)
   assert(answer['align_cost'] == -1)
 
-def test_should_solve_mismatchedLen():
+def test_should_solve_largerSeq1Len():
+  solver = GeneSequencing()
+  answer = solver.align("hello", "hi", False, 100)
+  assert(answer['align_cost'] == 13)
+  assert(answer['seqi_first100'] == 'hello')
+  assert(answer['seqj_first100'] == 'hi---')
+
+def test_should_solve_largerSeq2Len():
   solver = GeneSequencing()
   answer = solver.align("hi", "hello", False, 100)
   
