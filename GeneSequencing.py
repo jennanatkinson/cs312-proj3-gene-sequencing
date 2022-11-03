@@ -15,6 +15,7 @@ import math
 
 # Used to compute the bandwidth for banded version
 MAXINDELS = 3
+SEQRETURNLEN = 100
 
 # Used to implement Needleman-Wunsch scoring
 MATCH = -3
@@ -82,9 +83,7 @@ class GeneSequencing:
 	def findMinCost(self, costs):
 		bestCost = Cost(None, None, None)
 		for cost in costs:
-			if bestCost.costVal is None:
-				bestCost = cost
-			elif cost.costVal is not None and cost.costVal < bestCost.costVal:
+			if (bestCost.costVal is None) or (cost.costVal is not None and cost.costVal < bestCost.costVal):
 				bestCost = cost
 		return bestCost
 
@@ -123,6 +122,9 @@ class GeneSequencing:
 			seq1 = seq1[:align_length]
 		if len(seq2) > align_length:
 			seq2 = seq2[:align_length]
+		if seq1 == seq2:
+			return {'align_cost':len(seq1)*MATCH, 'seqi_first100':seq1, 'seqj_first100':seq2}
+		
 		self.banded = banded
 		self.MaxCharactersToAlign = align_length
 		self.numColumns = len(seq1)+1
@@ -186,8 +188,12 @@ class GeneSequencing:
 				self.costDict[tuple((rowIndex,colIndex))] = self.findMinCost(costList)
 				# self.printDict(seq1, seq2)
 		
+		self.printDict(seq1, seq2)
 		cell = tuple((len(seq2), len(seq1)))
-		score = self.costDict.get(cell).costVal
+		score = math.inf
+		# This would happen if it is outside of the band
+		if cell is not None:
+			score = self.costDict.get(cell).costVal
 		if score != math.inf:
 			alignment1, alignment2 = self.getAlignmentStrings(seq1, seq2, cell)
 		else:
