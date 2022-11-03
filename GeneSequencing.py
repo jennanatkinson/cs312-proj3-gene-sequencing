@@ -95,8 +95,8 @@ class GeneSequencing:
 				alignment2 += seq2[cell[0]-1]			
 			cell = cost.prev
 
-		#Reverse strings
-		return alignment1[::-1], alignment2[::-1]
+		#Reverse strings and cut to 100
+		return alignment1[::-1][:100], alignment2[::-1][:100]
 
 	# Check the banded setting and return the value
 	def checkBanded(self, banded:bool, trueVal, falseVal):

@@ -123,3 +123,55 @@ def test_should_solve_evenBanded():
   #Assert last two rows
   assert(solver.costDict.get(tuple((4,0))) == None)
   assert(solver.costDict.get(tuple((4,1))).costVal == 12)
+
+def loadSequencesFromFile():
+  FILENAME = 'genomes.txt'
+  raw = open(FILENAME,'r').readlines()
+  sequences = {}
+  
+  i = 0
+  cur_id	= ''
+  cur_str = ''
+  for liner in raw:
+    line = liner.strip()
+    if '#' in line:
+      if len(cur_id) > 0:
+        sequences[i] = (i,cur_id,cur_str)
+        cur_id	= ''
+        cur_str = ''
+        i += 1
+      parts = line.split('#')
+      cur_id = parts[0]
+      cur_str += parts[1]
+    else:
+      cur_str += line
+  if len(cur_str) > 0 or len(cur_id) > 0:
+    sequences[i] = (i,cur_id,cur_str)
+  return sequences
+
+def mockGUI(seq1Num:int, seq2Num:int, banded:bool, alignLength):
+  seqs = loadSequencesFromFile()
+  sequences = [ seqs[i][2] for i in sorted(seqs.keys()) ]
+  solver = GeneSequencing()
+  answer = solver.align(sequences[seq1Num], sequences[seq2Num], banded, alignLength)
+  return answer
+
+def test_unbanded_alignmentStrings_Seq3Seq4():
+  answer = mockGUI(2, 3, False, 1000)
+  assert(answer['seqi_first100'] == 'gattgcgagcgatttgcgtgcgtgcatcccgcttcactgatctcttgttagatcttttcataatctaaactttataaaaacatccactccctgtagtcta')
+  assert(answer['seqj_first100'] == 'gattgcgagcgatttgcgtgcgtgcatcccgcttcactgatctcttgttagatcttttcataatctaaactttataaaaacatccactccctgtagtcta')
+
+def test_banded_alignmentStrings_Seq3Seq4():
+  answer = mockGUI(2, 3, True, 3000)
+  assert(answer['seqi_first100'] == 'gattgcgagcgatttgcgtgcgtgcatcccgcttcactgatctcttgttagatcttttcataatctaaactttataaaaacatccactccctgtagtcta')
+  assert(answer['seqj_first100'] == 'gattgcgagcgatttgcgtgcgtgcatcccgcttcactgatctcttgttagatcttttcataatctaaactttataaaaacatccactccctgtagtcta')
+
+def test_unbanded_alignmentStrings_Seq9Seq10():
+  answer = mockGUI(8, 9, False, 1000)
+  assert(answer['seqi_first100'] == 'at-----tg---g-cgtccgtacgtaccctttctactctcaaactcttgttagtttaaatctaatctaaactttataaacggcacttcctgtgtgtccat')
+  assert(answer['seqj_first100'] == 'ataagagtgattggcgtccgtacgtaccctttctactctcaaactcttgttagtttaaatctaatctaaactttataaacggcacttcctgtgtgtccat')
+
+def test_banded_alignmentStrings_Seq9Seq10():
+  answer = mockGUI(8, 9, True, 3000)
+  assert(answer['seqi_first100'] == 'attggcgtccgta-cgtaccctttctactctcaa-actcttgttagtttaaatctaatctaaa-ctt-tataaacggcacttcctgtgtgtccatgcccg')
+  assert(answer['seqj_first100'] == 'ataagagtgattggcgt-ccgtacgtaccctttctactctcaa-actcttg-t-tagtttaaatctaatctaaactttataaacggcacttcc-tgt--g')
