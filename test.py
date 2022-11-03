@@ -84,4 +84,42 @@ def test_should_solve_largerSeq2Len():
   assert(answer['align_cost'] == 13)
   assert(answer['seqi_first100'] == 'hi---')
   assert(answer['seqj_first100'] == 'hello')
-  
+
+def test_should_cut_alignLength():
+  solver = GeneSequencing()
+  answer = solver.align("hi", "hihello", False, 2)
+  assert(answer['align_cost'] == MATCH*2)
+  assert(answer['seqi_first100'] == 'hi')
+  assert(answer['seqj_first100'] == 'hi')
+
+def test_should_solve_unevenBanded():
+  solver = GeneSequencing()
+  answer = solver.align("abcd", "happy", True, 10)
+  assert(answer['align_cost'] == 5)
+  assert(answer['seqi_first100'] == '-abcd')
+  assert(answer['seqj_first100'] == 'happy')
+
+  # Make sure first row bands properly
+  assert(solver.costDict.get(tuple((0,3))).costVal == 15)
+  assert(solver.costDict.get(tuple((0,4))) == None)
+
+  #Assert last two rows
+  assert(solver.costDict.get(tuple((4,0))) == None)
+  assert(solver.costDict.get(tuple((4,1))).costVal == 12)
+  assert(solver.costDict.get(tuple((5,0))) == None)
+  assert(solver.costDict.get(tuple((5,1))) == None)
+
+def test_should_solve_evenBanded():
+  solver = GeneSequencing()
+  answer = solver.align("abcd", "happ", True, 10)
+  assert(answer['align_cost'] == 4)
+  assert(answer['seqi_first100'] == 'abcd')
+  assert(answer['seqj_first100'] == 'happ')
+
+  # Make sure first row bands properly
+  assert(solver.costDict.get(tuple((0,3))).costVal == 15)
+  assert(solver.costDict.get(tuple((0,4))) == None)
+
+  #Assert last two rows
+  assert(solver.costDict.get(tuple((4,0))) == None)
+  assert(solver.costDict.get(tuple((4,1))).costVal == 12)
