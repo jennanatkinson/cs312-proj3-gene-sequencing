@@ -139,15 +139,13 @@ class GeneSequencing:
 		numFirstRow = self.checkBanded(banded, min(1+MAXINDELS,self.numColumns), self.numColumns)
 		for i in range(1, numFirstRow):
 			prevCell = tuple((0, i-1))
-			prevCost = self.costDict.get(prevCell)
-			self.costDict[tuple((0,i))] = Cost(prevCost.costVal+INDEL, prevCell, Direction.LEFT)
+			self.costDict[tuple((0,i))] = Cost(self.costDict.get(prevCell).costVal+INDEL, prevCell, Direction.LEFT)
 
 		#Fill first col
 		numFirstCol = self.checkBanded(banded, min(1+MAXINDELS,self.numRows), self.numRows)
 		for i in range(1, numFirstCol):
 			prevCell = tuple((i-1, 0))
-			prevCost = self.costDict.get(prevCell)
-			self.costDict[tuple((i,0))] = Cost(prevCost.costVal+INDEL, prevCell, Direction.TOP)
+			self.costDict[tuple((i,0))] = Cost(self.costDict.get(prevCell).costVal+INDEL, prevCell, Direction.TOP)
 
 		# self.printDict(seq1, seq2)
 
@@ -188,12 +186,11 @@ class GeneSequencing:
 				self.costDict[tuple((rowIndex,colIndex))] = self.findMinCost(costList)
 				# self.printDict(seq1, seq2)
 		
-		self.printDict(seq1, seq2)
 		cell = tuple((len(seq2), len(seq1)))
+		cost = self.costDict.get(cell)
 		score = math.inf
-		# This would happen if it is outside of the band
-		if cell is not None:
-			score = self.costDict.get(cell).costVal
+		if cost is not None: # This would happen if it is outside of the band
+			score = cost.costVal
 		if score != math.inf:
 			alignment1, alignment2 = self.getAlignmentStrings(seq1, seq2, cell)
 		else:
