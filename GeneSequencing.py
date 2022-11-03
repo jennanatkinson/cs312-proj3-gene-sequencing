@@ -79,14 +79,6 @@ class GeneSequencing:
 			print()
 		print()
 
-	# Given an array of costs, find the smallest
-	def findMinCost(self, costs):
-		bestCost = Cost(None, None, None)
-		for cost in costs:
-			if (bestCost.costVal is None) or (cost.costVal is not None and cost.costVal < bestCost.costVal):
-				bestCost = cost
-		return bestCost
-
 	# Traverse through the matrix and build up the alignment strings
 	def getAlignmentStrings(self, seq1, seq2, cell:tuple):
 		alignment1, alignment2 = "", ""
@@ -114,7 +106,7 @@ class GeneSequencing:
 			return falseVal
 		
 	# Given two sequences, find the optimal alignment of Insert/Deletion, Substitution or Match
-	#    @required _seq1_ and _seq2_ are two sequences to be aligned
+	#    @required _seq1_(top of matrix) and _seq2_(side of matrix) are two sequences to be aligned
 	#    @required _banded_ is a boolean for computing banded alignment or full alignment
 	# 	 @required align_length_ = how many base pairs to use in computing the alignment
 	def align(self, seq1, seq2, banded, align_length):
@@ -129,8 +121,6 @@ class GeneSequencing:
 		self.MaxCharactersToAlign = align_length
 		self.numColumns = len(seq1)+1
 		self.numRows = len(seq2)+1
-		#matrix = seq1 * seq2
-		#0 row and 0 column == _
 		self.costDict = dict() # Key-Coordinate[row, column] : Value-[Cost, PrevCoordinate]
 		
 		self.costDict[tuple((0,0))] = Cost(0, None, None)
@@ -153,23 +143,10 @@ class GeneSequencing:
 		for rowIndex in range(1, self.numRows):
 			colStart = self.checkBanded(banded, max(rowIndex-MAXINDELS,1), 1)
 			colEnd = self.checkBanded(banded, min(rowIndex+MAXINDELS+1,self.numColumns), self.numColumns)
+			# Calculate costs with priority: left > top > diagonal
 			for colIndex in range(colStart, colEnd):
-				costList = []
+				minCost = Cost(math.inf, None, None)
 
-				leftPrevCell = tuple((rowIndex, colIndex-1))
-				leftPrevCost = self.costDict.get(leftPrevCell)
-				if leftPrevCost is not None:
-					costList.append(Cost(leftPrevCost.costVal+INDEL, leftPrevCell, Direction.LEFT))
-				else:
-					costList.append(Cost(math.inf, None, None))
-				
-				topPrevCell = tuple((rowIndex-1, colIndex))
-				topPrevCost = self.costDict.get(topPrevCell)
-				if topPrevCost is not None:
-					costList.append(Cost(topPrevCost.costVal+INDEL, topPrevCell, Direction.TOP))
-				else:
-					costList.append(Cost(math.inf, None, None))
-				
 				# Calculate diagonal cost if match/sub
 				diagonalPrevCell = tuple((rowIndex-1, colIndex-1))
 				diagonalPrevCost = self.costDict.get(diagonalPrevCell)
@@ -179,11 +156,26 @@ class GeneSequencing:
 						diagonalCost.costVal += MATCH
 					else:
 						diagonalCost.costVal += SUB
-					costList.append(diagonalCost)
-				else:
-					costList.append(Cost(math.inf, None, None))
+					if diagonalCost.costVal < minCost.costVal:
+						minCost = diagonalCost
+
+				# Calculate top cost if indel
+				topPrevCell = tuple((rowIndex-1, colIndex))
+				topPrevCost = self.costDict.get(topPrevCell)
+				if topPrevCost is not None:
+					topCost = Cost(topPrevCost.costVal+INDEL, topPrevCell, Direction.TOP)
+					if topCost.costVal <= minCost.costVal:
+						minCost = topCost
+
+				# Calculate left cost if indel
+				leftPrevCell = tuple((rowIndex, colIndex-1))
+				leftPrevCost = self.costDict.get(leftPrevCell)
+				if leftPrevCost is not None:
+					leftCost = Cost(leftPrevCost.costVal+INDEL, leftPrevCell, Direction.LEFT)
+					if leftCost.costVal <= minCost.costVal:
+						minCost = leftCost
 				
-				self.costDict[tuple((rowIndex,colIndex))] = self.findMinCost(costList)
+				self.costDict[tuple((rowIndex,colIndex))] = minCost
 				# self.printDict(seq1, seq2)
 		
 		cell = tuple((len(seq2), len(seq1)))
