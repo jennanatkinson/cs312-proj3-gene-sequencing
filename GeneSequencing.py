@@ -12,8 +12,6 @@ else:
 	raise Exception('Unsupported Version of PyQt: {}'.format(PYQT_VER))
 
 import math
-import time
-import random
 
 # Used to compute the bandwidth for banded version
 MAXINDELS = 3
@@ -23,25 +21,13 @@ MATCH = -3
 INDEL = 5
 SUB = 1
 
-# minVal = 0
-# maxVal = 1
-
-# class Cell:
-# 	def __init__(self, x:int, y:int):
-# 		self.x = x
-# 		self.y = y
-
-# 	def __hash__(self):
-# 		return (self.y * (maxVal - minVal)) + self.x
-
-	# def __eq__(self, other):
-	# 	return (self.x, self.y) == (other.x, other.y)
-
+# Used when building up the matrix of which direction the previous cell came from
 class Direction(Enum):
 	LEFT = auto()
 	TOP = auto()
 	DIAGONAL = auto()
 	
+# Contains the costVal, previous cell which helped calculate that, and the direction the previous cell came from
 class Cost:
 	def __init__(self, cost:int, prev:tuple, dir:Direction):
 		self.costVal = cost
@@ -53,14 +39,10 @@ class Cost:
 
 
 class GeneSequencing:
-
 	def __init__( self ):
 		pass
-	
-# This is the method called by the GUI.  _seq1_ and _seq2_ are two sequences to be aligned, _banded_ is a boolean that tells
-# you whether you should compute a banded alignment or full alignment, and _align_length_ tells you 
-# how many base pairs to use in computing the alignment
 
+	# Print the cost dictionary 
 	def printDict(self, seq1, seq2):
 		table_data = [[]]
 		# Put the first row aka listing the seq1
@@ -106,9 +88,9 @@ class GeneSequencing:
 				bestCost = cost
 		return bestCost
 
+	# Traverse through the matrix and build up the alignment strings
 	def getAlignmentStrings(self, seq1, seq2, cell:tuple):
 		alignment1, alignment2 = "", ""
-		# Go back through path and build up strings
 		while not (cell[0] == 0 and cell[1] == 0):
 			cost = self.costDict.get(cell)
 			if cost.direction == Direction.LEFT:
@@ -125,12 +107,17 @@ class GeneSequencing:
 		#Reverse strings
 		return alignment1[::-1], alignment2[::-1]
 
-	def checkBanded(self, banded, trueVal, falseVal):
+	# Check the banded setting and return the value
+	def checkBanded(self, banded:bool, trueVal, falseVal):
 		if banded:
 			return trueVal
 		else:
 			return falseVal
 		
+	# Given two sequences, find the optimal alignment of Insert/Deletion, Substitution or Match
+	#    @required _seq1_ and _seq2_ are two sequences to be aligned
+	#    @required _banded_ is a boolean for computing banded alignment or full alignment
+	# 	 @required align_length_ = how many base pairs to use in computing the alignment
 	def align(self, seq1, seq2, banded, align_length):
 		if len(seq1) > align_length:
 			seq1 = seq1[:align_length]
@@ -160,7 +147,7 @@ class GeneSequencing:
 			prevCost = self.costDict.get(prevCell)
 			self.costDict[tuple((i,0))] = Cost(prevCost.costVal+INDEL, prevCell, Direction.TOP)
 
-		self.printDict(seq1, seq2)
+		# self.printDict(seq1, seq2)
 
 		#Run algorithm for all cells
 		for rowIndex in range(1, self.numRows):
@@ -197,7 +184,7 @@ class GeneSequencing:
 					costList.append(Cost(math.inf, None, None))
 				
 				self.costDict[tuple((rowIndex,colIndex))] = self.findMinCost(costList)
-				self.printDict(seq1, seq2)
+				# self.printDict(seq1, seq2)
 		
 		cell = tuple((len(seq2), len(seq1)))
 		score = self.costDict.get(cell).costVal
@@ -205,8 +192,8 @@ class GeneSequencing:
 			alignment1, alignment2 = self.getAlignmentStrings(seq1, seq2, cell)
 		else:
 			alignment1 = alignment2 = "No Alignment Possible"
-		print(alignment1)
-		print(alignment2)
+		# print(alignment1)
+		# print(alignment2)
 
 ###################################################################################################
 # your code should replace these three statements and populate the three variables: score, alignment1 and alignment2
