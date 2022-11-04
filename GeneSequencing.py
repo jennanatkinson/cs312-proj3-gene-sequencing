@@ -22,13 +22,14 @@ MATCH = -3
 INDEL = 5
 SUB = 1
 
-# Used when building up the matrix of which direction the previous cell came from
+# Indicates the direction the previous cell in the matrix
 class Direction(Enum):
 	LEFT = auto()
 	TOP = auto()
 	DIAGONAL = auto()
 	
 # Contains the costVal, previous cell which helped calculate that, and the direction the previous cell came from
+# Space: O(1)
 class Cost:
 	def __init__(self, cost:int, prev:tuple, dir:Direction):
 		self.costVal = cost
@@ -80,6 +81,7 @@ class GeneSequencing:
 		print()
 
 	# Traverse through the matrix and build up the alignment strings
+	# Time: O(x), Space: O(1) [x=max(len(seq1), len(seq2))]
 	def getAlignmentStrings(self, seq1, seq2, cell:tuple):
 		alignment1, alignment2 = "", ""
 		while not (cell[0] == 0 and cell[1] == 0):
@@ -95,21 +97,24 @@ class GeneSequencing:
 				alignment2 += seq2[cell[0]-1]			
 			cell = cost.prev
 
-		#Reverse strings and cut to 100
+		#Reverse strings and cut to 100, Time: O(x)
 		return alignment1[::-1][:100], alignment2[::-1][:100]
 
-	# Check the banded setting and return the value
-	def checkBanded(self, banded:bool, trueVal, falseVal):
-		if banded:
+	# Check the banded setting and return the value, Time: O(1)
+	def checkBanded(self, trueVal, falseVal):
+		if self.banded:
 			return trueVal
 		else:
 			return falseVal
-		
+	
 	# Given two sequences, find the optimal alignment of Insert/Deletion, Substitution or Match
 	#    @required _seq1_(top of matrix) and _seq2_(side of matrix) are two sequences to be aligned
 	#    @required _banded_ is a boolean for computing banded alignment or full alignment
 	# 	 @required align_length_ = how many base pairs to use in computing the alignment
+	# UNBAN_Time: O(mn) UNBAN_Space: O(mn) [seq1=m, seq2=n]
+	# BAN_Time: O(kn) BAN_Space: O(kn) [k=2(MAXINDELS)+1, seq2=n]
 	def align(self, seq1, seq2, banded, align_length):
+		#Cut sequences and check for matching
 		if len(seq1) > align_length:
 			seq1 = seq1[:align_length]
 		if len(seq2) > align_length:
@@ -118,29 +123,30 @@ class GeneSequencing:
 			return {'align_cost':len(seq1)*MATCH, 'seqi_first100':seq1, 'seqj_first100':seq2}
 		
 		self.banded = banded
-		self.MaxCharactersToAlign = align_length
 		self.numColumns = len(seq1)+1
 		self.numRows = len(seq2)+1
-		self.costDict = dict() # Key-Coordinate[row, column] : Value-[Cost, PrevCoordinate]
+
+		# CostDict => Key[tuple((rowIndex, columnIndex))] : [Cost(val:int, prevCellTuple, prevDirection)]
+		# UNBAN_Space: O(mn), BAN_Space: O(kn)
+		self.costDict = dict() 
 		
 		self.costDict[tuple((0,0))] = Cost(0, None, None)
 	
-		# Fill first row
-		numFirstRow = self.checkBanded(banded, min(1+MAXINDELS,self.numColumns), self.numColumns)
+		# Fill first row, UNBAN_Time: O(n), BAN_Time: O(k+1)
+		numFirstRow = self.checkBanded(min(1+MAXINDELS,self.numColumns), self.numColumns)
 		for i in range(1, numFirstRow):
 			self.costDict[tuple((0,i))] = Cost(i*INDEL, tuple((0, i-1)), Direction.LEFT)
 
-		#Fill first col
-		numFirstCol = self.checkBanded(banded, min(1+MAXINDELS,self.numRows), self.numRows)
+		#Fill first col, UNBAN_Time: O(m), BAN_Time: O(k+1)
+		numFirstCol = self.checkBanded(min(1+MAXINDELS,self.numRows), self.numRows)
 		for i in range(1, numFirstCol):
 			self.costDict[tuple((i,0))] = Cost(i*INDEL, tuple((i-1, 0)), Direction.TOP)
 
-		# self.printDict(seq1, seq2)
-
-		#Run algorithm for all cells
+		#Run algorithm for all cells, UNBAN_Time: O((m-1)*(n-1)), BAN_Time: O(k*n)
 		for rowIndex in range(1, self.numRows):
-			colStart = self.checkBanded(banded, max(rowIndex-MAXINDELS,1), 1)
-			colEnd = self.checkBanded(banded, min(rowIndex+MAXINDELS+1,self.numColumns), self.numColumns)
+			colStart = self.checkBanded(max(rowIndex-MAXINDELS,1), 1)
+			colEnd = self.checkBanded(min(rowIndex+MAXINDELS+1,self.numColumns), self.numColumns)
+			
 			# Calculate costs with priority: left > top > diagonal
 			for colIndex in range(colStart, colEnd):
 				minCost = Cost(math.inf, None, None)
@@ -188,15 +194,4 @@ class GeneSequencing:
 		# print(alignment1)
 		# print(alignment2)
 
-###################################################################################################
-# your code should replace these three statements and populate the three variables: score, alignment1 and alignment2
-		# score = random.random()*100
-		# alignment1 = 'abc-easy  DEBUG:({} chars,align_len={}{})'.format(
-		# 	len(seq1), align_length, ',BANDED' if banded else '')
-		# alignment2 = 'as-123--  DEBUG:({} chars,align_len={}{})'.format(
-		# 	len(seq2), align_length, ',BANDED' if banded else '')
-###################################################################################################					
-		
 		return {'align_cost':score, 'seqi_first100':alignment1, 'seqj_first100':alignment2}
-
-
