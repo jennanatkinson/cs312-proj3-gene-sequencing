@@ -128,14 +128,12 @@ class GeneSequencing:
 		# Fill first row
 		numFirstRow = self.checkBanded(banded, min(1+MAXINDELS,self.numColumns), self.numColumns)
 		for i in range(1, numFirstRow):
-			prevCell = tuple((0, i-1))
-			self.costDict[tuple((0,i))] = Cost(self.costDict.get(prevCell).costVal+INDEL, prevCell, Direction.LEFT)
+			self.costDict[tuple((0,i))] = Cost(i*INDEL, tuple((0, i-1)), Direction.LEFT)
 
 		#Fill first col
 		numFirstCol = self.checkBanded(banded, min(1+MAXINDELS,self.numRows), self.numRows)
 		for i in range(1, numFirstCol):
-			prevCell = tuple((i-1, 0))
-			self.costDict[tuple((i,0))] = Cost(self.costDict.get(prevCell).costVal+INDEL, prevCell, Direction.TOP)
+			self.costDict[tuple((i,0))] = Cost(i*INDEL, tuple((i-1, 0)), Direction.TOP)
 
 		# self.printDict(seq1, seq2)
 
